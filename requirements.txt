@@ -3,7 +3,4 @@ flask-cors==4.0.1
 gunicorn==22.0.0
 psutil==6.0.0
 Werkzeug==3.0.4
-python-telegram-bot==20.7
-
-
-
+python-telegram-bot==21.1.1
