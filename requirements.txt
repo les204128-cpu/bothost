@@ -4,3 +4,4 @@ gunicorn==22.0.0
 psutil==6.0.0
 Werkzeug==3.0.4
 pyTelegramBotAPI==4.22.0
+python-telegram-bot==21.6
