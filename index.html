@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BotHost — Treo Bot 24/7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','system-ui','sans-serif'] } } } };
+</script>
+<style>
+  :root { --purple:#8b5cf6; --indigo:#6366f1; --border:rgba(255,255,255,.08); --card:rgba(255,255,255,.035); --muted:#8b8fa3; }
+  * { -webkit-tap-highlight-color: transparent; }
+  html, body { background:#0a0a0f; color:#fff; font-family:'Inter',system-ui,sans-serif; }
+  body { min-height:100vh; overflow-x:hidden; }
+  .bg-glow { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .bg-glow .g1 { position:absolute; top:-15%; left:-10%; width:55vw; height:55vw; border-radius:50%; background:radial-gradient(circle,rgba(139,92,246,.16),transparent 62%); filter:blur(30px); }
+  .bg-glow .g2 { position:absolute; bottom:-20%; right:-10%; width:50vw; height:50vw; border-radius:50%; background:radial-gradient(circle,rgba(99,102,241,.14),transparent 62%); filter:blur(30px); }
+  .bg-glow .grid { position:absolute; inset:0; opacity:.35; background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px); background-size:44px 44px; mask-image:radial-gradient(ellipse at 50% 0%,black 30%,transparent 75%); -webkit-mask-image:radial-gradient(ellipse at 50% 0%,black 30%,transparent 75%); }
+  .app { position:relative; z-index:1; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb { background:rgba(139,92,246,.35); border-radius:8px; }
+  ::-webkit-scrollbar-thumb:hover { background:rgba(139,92,246,.55); }
+  ::-webkit-scrollbar-track { background:transparent; }
+  .btn { position:relative; overflow:hidden; transition:transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease; }
+  .btn:active { transform:scale(.97); }
+  .btn-primary { background:linear-gradient(135deg,#8b5cf6,#6366f1); box-shadow:0 4px 20px rgba(139,92,246,.35); }
+  .btn-primary:hover { box-shadow:0 6px 28px rgba(139,92,246,.55); }
+  .btn-ghost { background:var(--card); border:1px solid var(--border); }
+  .btn-ghost:hover { border-color:rgba(139,92,246,.5); background:rgba(139,92,246,.08); }
+  .btn-danger { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.4); color:#fca5a5; }
+  .btn-danger:hover { background:rgba(239,68,68,.22); }
+  .ripple-span { position:absolute; border-radius:50%; background:rgba(255,255,255,.35); transform:scale(0); animation:rippleAnim .6s ease-out forwards; pointer-events:none; }
+  @keyframes rippleAnim { to { transform:scale(4); opacity:0; } }
+  .icon-btn { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:9px; border:1px solid var(--border); background:var(--card); color:#cfd2e0; transition:all .18s ease; position:relative; overflow:hidden; }
+  .icon-btn:hover { border-color:rgba(139,92,246,.55); color:#fff; background:rgba(139,92,246,.12); }
+  .icon-btn.danger:hover { border-color:rgba(239,68,68,.6); color:#fca5a5; background:rgba(239,68,68,.12); }
+  .icon-btn.play:hover { border-color:rgba(34,197,94,.6); color:#4ade80; background:rgba(34,197,94,.12); }
+  .icon-btn:disabled { opacity:.35; cursor:not-allowed; pointer-events:none; }
+  .spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.25); border-top-color:#fff; border-radius:50%; animation:spinAnim .8s linear infinite; flex:none; }
+  @keyframes spinAnim { to { transform:rotate(360deg); } }
+  .pulse-dots { display:inline-flex; gap:4px; align-items:center; }
+  .pulse-dots span { width:6px; height:6px; border-radius:50%; background:currentColor; animation:pulseDot 1.2s infinite ease-in-out; }
+  .pulse-dots span:nth-child(2){ animation-delay:.15s; } .pulse-dots span:nth-child(3){ animation-delay:.3s; }
+  @keyframes pulseDot { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+  .screen { animation:fadeIn .4s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+  .modal-overlay { position:fixed; inset:0; z-index:50; background:rgba(5,5,10,.7); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:16px; animation:overlayIn .2s ease both; }
+  @keyframes overlayIn { from{opacity:0} to{opacity:1} }
+  .modal-card { animation:scaleIn .28s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes scaleIn { from{opacity:0; transform:scale(.94) translateY(10px)} to{opacity:1; transform:none} }
+  #toastContainer { position:fixed; bottom:20px; right:20px; z-index:100; display:flex; flex-direction:column; gap:10px; max-width:calc(100vw - 40px); }
+  .toast { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:12px; min-width:260px; max-width:360px; background:rgba(18,18,26,.92); backdrop-filter:blur(10px); border:1px solid var(--border); box-shadow:0 10px 40px rgba(0,0,0,.5); animation:toastUp .32s cubic-bezier(.16,1,.3,1) both; font-size:14px; }
+  .toast.leaving { transition:all .28s ease; opacity:0; transform:translateY(12px) scale(.97); }
+  @keyframes toastUp { from{opacity:0; transform:translateY(18px) scale(.96)} to{opacity:1; transform:none} }
+  .toast .t-icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex:none; }
+  .toast.info .t-icon{background:rgba(139,92,246,.18);color:#a78bfa} .toast.success .t-icon{background:rgba(34,197,94,.16);color:#4ade80}
+  .toast.error .t-icon{background:rgba(239,68,68,.16);color:#f87171} .toast.warn .t-icon{background:rgba(234,179,8,.16);color:#facc15}
+  .field { width:100%; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:11px; padding:11px 14px; font-size:14px; color:#fff; outline:none; transition:border-color .2s, box-shadow .2s; }
+  .field:focus { border-color:rgba(139,92,246,.7); box-shadow:0 0 0 3px rgba(139,92,246,.15); }
+  .field::placeholder { color:#5b5f73; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:16px; backdrop-filter:blur(8px); }
+  .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+  .status-dot.running { background:#22c55e; box-shadow:0 0 8px #22c55e; animation:blinkDot 1.6s ease-in-out infinite; }
+  .status-dot.stopped { background:#4b5065; }
+  @keyframes blinkDot { 0%,100%{opacity:1} 50%{opacity:.45} }
+  .type-box { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex:none; }
+  .type-py{background:rgba(59,130,246,.14);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+  .type-js{background:rgba(234,179,8,.14);color:#facc15;border:1px solid rgba(234,179,8,.3)}
+  .type-zip{background:rgba(236,72,153,.14);color:#f472b6;border:1px solid rgba(236,72,153,.3)}
+  .badge { font-size:10px; font-weight:700; letter-spacing:.06em; padding:2px 7px; border-radius:6px; text-transform:uppercase; }
+  .badge-py{background:rgba(59,130,246,.15);color:#93c5fd} .badge-js{background:rgba(234,179,8,.15);color:#fde047}
+  .badge-zip{background:rgba(236,72,153,.15);color:#f9a8d4} .badge-pid{background:rgba(139,92,246,.15);color:#c4b5fd;font-family:ui-monospace,monospace}
+  .badge-role{background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(99,102,241,.25));color:#ddd6fe;border:1px solid rgba(139,92,246,.35)}
+  .badge-mode{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+  .dropzone { border:2px dashed rgba(139,92,246,.35); border-radius:14px; transition:all .2s ease; cursor:pointer; }
+  .dropzone:hover, .dropzone.drag { border-color:rgba(139,92,246,.8); background:rgba(139,92,246,.07); }
+  .dropzone.drag { transform:scale(1.01); }
+  .terminal { background:#05050a; border:1px solid rgba(139,92,246,.22); border-radius:12px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; line-height:1.7; color:#4ade80; padding:14px 16px; height:340px; overflow-y:auto; white-space:pre-wrap; word-break:break-word; }
+  .terminal .t-time{color:#4b5065} .terminal .t-warn{color:#facc15} .terminal .t-err{color:#f87171} .terminal .t-info{color:#93c5fd}
+  .switch { position:relative; width:38px; height:22px; border-radius:999px; background:rgba(255,255,255,.12); cursor:pointer; transition:background .2s; flex:none; }
+  .switch::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .2s cubic-bezier(.16,1,.3,1); }
+  .switch.on { background:linear-gradient(135deg,#8b5cf6,#6366f1); }
+  .switch.on::after { transform:translateX(16px); }
+  .grad-text { background:linear-gradient(135deg,#a78bfa,#818cf8); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .tab-btn { flex:1; padding:9px; border-radius:10px; font-size:14px; font-weight:600; color:var(--muted); transition:all .2s; position:relative; overflow:hidden; }
+  .tab-btn.active { background:rgba(139,92,246,.15); color:#fff; box-shadow:inset 0 0 0 1px rgba(139,92,246,.4); }
+  .file-row { transition:background .18s, border-color .18s; }
+  .file-row:hover { background:rgba(139,92,246,.05); border-color:rgba(139,92,246,.25); }
+  .hidden { display:none !important; }
+  @media (max-width:640px){ .terminal{height:260px} #toastContainer{left:16px;right:16px;bottom:16px} .toast{min-width:0;max-width:none} }
+</style>
+</head>
+<body>
+<div class="bg-glow"><div class="grid"></div><div class="g1"></div><div class="g2"></div></div>
+
+<div class="app">
+  <!-- AUTH -->
+  <div id="authScreen" class="screen min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="card w-full max-w-md p-7 sm:p-9 relative">
+      <div class="absolute -top-px left-8 right-8 h-px" style="background:linear-gradient(90deg,transparent,rgba(139,92,246,.7),transparent)"></div>
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(99,102,241,.25));border:1px solid rgba(139,92,246,.4);box-shadow:0 0 30px rgba(139,92,246,.3)">
+          <iconify-icon icon="mdi:rocket-launch-outline" width="28" style="color:#c4b5fd"></iconify-icon>
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight">Bot<span class="grad-text">Host</span></h1>
+        <p class="text-sm mt-1" style="color:var(--muted)">Treo bot 24/7 — không tắt máy, không ngủ đông</p>
+        <div id="modeBadge" class="hidden mt-2 text-[10px] px-2 py-0.5 rounded-full badge badge-mode">REAL MODE</div>
+      </div>
+      <div class="flex gap-1.5 p-1 rounded-xl mb-5" style="background:rgba(255,255,255,.04);border:1px solid var(--border)">
+        <button id="tabLogin" class="tab-btn btn active">Đăng nhập</button>
+        <button id="tabRegister" class="tab-btn btn">Đăng ký</button>
+      </div>
+      <form id="authForm" class="space-y-3.5" autocomplete="off">
+        <div><label class="block text-xs font-medium mb-1.5" style="color:var(--muted)">Tên đăng nhập</label>
+          <input id="usernameInput" class="field" type="text" placeholder="Nhập username" autocomplete="off"></div>
+        <div><label class="block text-xs font-medium mb-1.5" style="color:var(--muted)">Mật khẩu</label>
+          <input id="passwordInput" class="field" type="password" placeholder="Nhập mật khẩu"></div>
+        <div id="confirmField" class="hidden"><label class="block text-xs font-medium mb-1.5" style="color:var(--muted)">Xác nhận mật khẩu</label>
+          <input id="confirmInput" class="field" type="password" placeholder="Nhập lại mật khẩu"></div>
+        <div id="authError" class="hidden text-xs px-3 py-2 rounded-lg" style="background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3)"></div>
+        <button id="authSubmit" type="submit" class="btn btn-primary w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <span id="authSpinner" class="spinner hidden"></span><span id="authSubmitText">Đăng nhập</span>
+        </button>
+      </form>
+      <div id="defaultHint" class="mt-5 text-center text-xs rounded-xl px-3 py-2.5" style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);color:#c4b5fd">
+        Tài khoản mặc định: <b>admin</b> / <b>admin123</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashScreen" class="screen hidden min-h-screen">
+    <header class="sticky top-0 z-20 backdrop-blur-xl border-b" style="background:rgba(10,10,15,.75);border-color:var(--border)">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-none" style="background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(99,102,241,.3));border:1px solid rgba(139,92,246,.4)">
+            <iconify-icon icon="mdi:rocket-launch-outline" width="18" style="color:#c4b5fd"></iconify-icon>
+          </div>
+          <span class="font-extrabold text-lg tracking-tight hidden sm:block">Bot<span class="grad-text">Host</span></span>
+          <span id="modeBadgeDash" class="hidden text-[10px] px-2 py-0.5 rounded-full badge badge-mode">REAL</span>
+        </div>
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl" style="background:var(--card);border:1px solid var(--border)">
+            <div id="userAvatar" class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-none" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)">A</div>
+            <div class="min-w-0 hidden sm:block">
+              <div id="userNameDisplay" class="text-sm font-semibold leading-tight truncate">admin</div>
+              <div class="text-[10px] leading-tight" style="color:var(--muted)">@<span id="userHandle">admin</span></div>
+            </div>
+            <span id="userRoleBadge" class="badge badge-role">ADMIN</span>
+          </div>
+          <button id="logoutBtn" class="icon-btn danger" title="Đăng xuất" aria-label="Đăng xuất"><iconify-icon icon="mdi:logout-variant" width="17"></iconify-icon></button>
+        </div>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div class="mb-6">
+        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight flex items-center gap-2">Xin chào, <span id="welcomeName">admin</span> <iconify-icon icon="mdi:hand-wave-outline" width="22" style="color:#facc15"></iconify-icon></h2>
+        <p class="text-sm mt-1" style="color:var(--muted)">Quản lý các script bot đang treo 24/7 của bạn.</p>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div class="card p-4 sm:p-5"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium" style="color:var(--muted)">Tổng file</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,.14);color:#a78bfa"><iconify-icon icon="mdi:folder-multiple-outline" width="17"></iconify-icon></div></div>
+          <div id="statTotal" class="text-2xl sm:text-3xl font-extrabold tabular-nums">0</div></div>
+        <div class="card p-4 sm:p-5"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium" style="color:var(--muted)">Đang chạy</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(34,197,94,.14);color:#4ade80"><iconify-icon icon="mdi:play-circle-outline" width="17"></iconify-icon></div></div>
+          <div id="statRunning" class="text-2xl sm:text-3xl font-extrabold tabular-nums" style="color:#4ade80">0</div></div>
+        <div class="card p-4 sm:p-5"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium" style="color:var(--muted)">Đã dừng</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(148,163,184,.14);color:#94a3b8"><iconify-icon icon="mdi:stop-circle-outline" width="17"></iconify-icon></div></div>
+          <div id="statStopped" class="text-2xl sm:text-3xl font-extrabold tabular-nums" style="color:#94a3b8">0</div></div>
+        <div class="card p-4 sm:p-5"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium" style="color:var(--muted)">Dung lượng</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,.14);color:#818cf8"><iconify-icon icon="mdi:harddisk" width="17"></iconify-icon></div></div>
+          <div id="statStorage" class="text-2xl sm:text-3xl font-extrabold tabular-nums">0 B</div></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2.5 mb-4">
+        <button id="uploadBtn" class="btn btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"><iconify-icon icon="mdi:cloud-upload-outline" width="17"></iconify-icon><span>Tải file lên</span></button>
+        <button id="reloadBtn" class="btn btn-ghost px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"><iconify-icon icon="mdi:refresh" width="16"></iconify-icon><span class="hidden sm:inline">Làm mới</span></button>
+        <div class="flex-1 min-w-[180px] relative">
+          <iconify-icon icon="mdi:magnify" width="16" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#5b5f73"></iconify-icon>
+          <input id="searchInput" class="field pl-9" type="text" placeholder="Tìm file theo tên...">
+        </div>
+      </div>
+      <div class="text-xs mb-3 flex flex-wrap gap-x-4 gap-y-1" style="color:var(--muted)">
+        <span>Giới hạn: <b style="color:#c4b5fd">20 file</b> / user · <b style="color:#c4b5fd">5 file</b> chạy đồng thời</span>
+        <span id="usageHint"></span>
+      </div>
+      <div id="fileList" class="space-y-2.5"></div>
+      <div id="emptyState" class="hidden card py-14 px-6 text-center">
+        <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25)"><iconify-icon icon="mdi:folder-open-outline" width="30" style="color:#a78bfa"></iconify-icon></div>
+        <div class="font-semibold">Chưa có file nào</div>
+        <p class="text-sm mt-1.5 mb-5" style="color:var(--muted)">Tải file <b>.py</b>, <b>.js</b> hoặc <b>.zip</b> lên để bắt đầu treo bot.</p>
+        <button id="emptyUploadBtn" class="btn btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center gap-2"><iconify-icon icon="mdi:plus" width="16"></iconify-icon> Tải file đầu tiên</button>
+      </div>
+    </main>
+    <footer class="max-w-6xl mx-auto px-6 py-8 text-center text-xs" style="color:#4b5065">
+      BotHost Dashboard · <span id="modeFooter">mock mode (localStorage)</span>
+    </footer>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div id="uploadModal" class="modal-overlay hidden">
+  <div class="modal-card card w-full max-w-lg p-6" style="max-height:90vh;overflow-y:auto">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(139,92,246,.15);color:#a78bfa"><iconify-icon icon="mdi:cloud-upload-outline" width="18"></iconify-icon></div>
+        <div><div class="font-bold">Tải file lên</div><div class="text-xs" style="color:var(--muted)">.py · .js · .zip — tối đa 50MB / file</div></div>
+      </div>
+      <button class="icon-btn" id="uploadClose" aria-label="Đóng"><iconify-icon icon="mdi:close" width="17"></iconify-icon></button>
+    </div>
+    <div id="dropZone" class="dropzone py-9 px-4 text-center mb-4">
+      <iconify-icon icon="mdi:file-upload-outline" width="34" style="color:#a78bfa"></iconify-icon>
+      <div class="mt-2 text-sm font-semibold">Kéo thả file vào đây</div>
+      <div class="text-xs mt-1" style="color:var(--muted)">hoặc <span class="font-semibold" style="color:#c4b5fd">bấm để chọn từ máy</span></div>
+      <input id="fileInput" type="file" multiple accept=".py,.js,.zip" class="hidden">
+    </div>
+    <div id="queueWrap" class="hidden mb-4">
+      <div class="text-xs font-semibold mb-2 flex items-center justify-between" style="color:var(--muted)">
+        <span>Hàng chờ (<span id="queueCount">0</span>)</span>
+        <button id="queueClear" class="text-xs hover:text-white" style="color:#f87171">Xoá tất cả</button>
+      </div>
+      <div id="queueList" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+    </div>
+    <div class="flex gap-2.5 justify-end">
+      <button id="uploadCancel" class="btn btn-ghost px-4 py-2.5 rounded-xl text-sm font-semibold">Huỷ</button>
+      <button id="uploadConfirm" class="btn btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2">
+        <span id="uploadSpinner" class="spinner hidden"></span><span id="uploadConfirmText">Xác nhận tải lên</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div id="logModal" class="modal-overlay hidden">
+  <div class="modal-card card w-full max-w-2xl p-5 sm:p-6" style="max-height:92vh;display:flex;flex-direction:column">
+    <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-none" style="background:rgba(34,197,94,.12);color:#4ade80"><iconify-icon icon="mdi:console-line" width="18"></iconify-icon></div>
+        <div class="min-w-0">
+          <div id="logFileName" class="font-bold truncate">bot.py</div>
+          <div class="text-xs flex items-center gap-2 flex-wrap" style="color:var(--muted)">
+            <span id="logPidBadge" class="badge badge-pid">PID —</span>
+            <span>uptime <b id="logUptime" style="color:#c4b5fd">0s</b></span>
+            <span id="logStatusDot" class="flex items-center gap-1.5"></span>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 text-xs cursor-pointer select-none" style="color:var(--muted)"><span>Auto-scroll</span><div id="autoScrollToggle" class="switch on"></div></label>
+        <button class="icon-btn" id="logClose" aria-label="Đóng"><iconify-icon icon="mdi:close" width="17"></iconify-icon></button>
+      </div>
+    </div>
+    <div id="logBody" class="terminal flex-1"></div>
+    <div class="mt-3 text-xs flex items-center gap-2" style="color:var(--muted)">
+      <span class="pulse-dots" style="color:#4ade80"><span></span><span></span><span></span></span>
+      <span id="logFooter">Đang cập nhật realtime mỗi 1.5s...</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="modal-overlay hidden">
+  <div class="modal-card card w-full max-w-sm p-6 text-center">
+    <div id="confirmIconWrap" class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-4" style="background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.3)">
+      <iconify-icon id="confirmIcon" icon="mdi:alert-outline" width="26" style="color:#facc15"></iconify-icon>
+    </div>
+    <div id="confirmTitle" class="font-bold text-lg">Xác nhận</div>
+    <p id="confirmMsg" class="text-sm mt-2 mb-6" style="color:var(--muted)"></p>
+    <div class="flex gap-2.5">
+      <button id="confirmCancel" class="btn btn-ghost flex-1 py-2.5 rounded-xl text-sm font-semibold">Huỷ</button>
+      <button id="confirmOk" class="btn btn-danger flex-1 py-2.5 rounded-xl text-sm font-semibold">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script>
+(function(){
+'use strict';
+/* ============================================================
+   STATE & HELPERS
+============================================================ */
+var DB_KEY='bothost_v1', SESS_KEY='bothost_session_v1', TOKEN_KEY='bothost_token_v1';
+var MAX_FILES=20, MAX_RUNNING=5, MAX_SIZE=50*1024*1024, ALLOWED_EXT=['.py','.js','.zip'];
+var state = {
+  mode:'mock', token:null, user:null, authMode:'login',
+  files:[], stats:{total:0,running:0,stopped:0,storage:0,limit_files:20,limit_running:5},
+  uploadQueue:[], search:'', logFileId:null, autoScroll:true,
+  mockLogBuffers:{}, confirmCb:null, pollTimer:null, logTimer:null
+};
+var TYPE_META = {
+  '.py':{label:'PY',cls:'type-py',badge:'badge-py',icon:'mdi:language-python'},
+  '.js':{label:'JS',cls:'type-js',badge:'badge-js',icon:'mdi:language-javascript'},
+  '.zip':{label:'ZIP',cls:'type-zip',badge:'badge-zip',icon:'mdi:zip-box'}
+};
+function fmtSize(b){ if(b<1024)return b+' B'; if(b<1048576)return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(2)+' MB'; }
+function fmtUptime(ms){ var s=Math.max(0,Math.floor(ms/1000)); var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60; if(h>0)return h+'h '+m+'m'; if(m>0)return m+'m '+ss+'s'; return ss+'s'; }
+function fmtTime(ts){ var d=new Date(ts); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function extOf(n){ var i=n.lastIndexOf('.'); return i===-1?'':n.slice(i).toLowerCase(); }
+function uid(){ return 'f_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+function randPid(){ return Math.floor(10000+Math.random()*89999); }
+function randInt(a,b){ return Math.floor(a+Math.random()*(b-a+1)); }
+function el(tag, attrs, children){ var n=document.createElement(tag); if(attrs)for(var k in attrs){ if(k==='class')n.className=attrs[k]; else if(k==='text')n.textContent=attrs[k]; else if(k.slice(0,5)==='data-')n.setAttribute(k,attrs[k]); else if(k==='style')n.style.cssText=attrs[k]; else n.setAttribute(k,attrs[k]); } if(children)children.forEach(function(c){ if(c)n.appendChild(typeof c==='string'?document.createTextNode(c):c); }); return n; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+/* ============================================================
+   TOAST + RIPPLE
+============================================================ */
+var TOAST_ICON={info:'mdi:information-outline',success:'mdi:check-circle-outline',error:'mdi:alert-circle-outline',warn:'mdi:alert-outline'};
+function toast(type,msg){
+  var c=document.getElementById('toastContainer');
+  var t=el('div',{class:'toast '+type});
+  var ic=el('div',{class:'t-icon'}); var ii=document.createElement('iconify-icon'); ii.setAttribute('icon',TOAST_ICON[type]||TOAST_ICON.info); ii.setAttribute('width','17'); ic.appendChild(ii);
+  var txt=el('div',{text:msg,style:'flex:1;min-width:0'});
+  var cl=el('button',{class:'icon-btn',style:'width:26px;height:26px;border:none;background:transparent'}); var ci=document.createElement('iconify-icon'); ci.setAttribute('icon','mdi:close'); ci.setAttribute('width','14'); cl.appendChild(ci);
+  cl.addEventListener('click',function(){dismiss(t);});
+  t.appendChild(ic);t.appendChild(txt);t.appendChild(cl); c.appendChild(t);
+  setTimeout(function(){dismiss(t);},2800);
+}
+function dismiss(t){ if(!t||t.classList.contains('leaving'))return; t.classList.add('leaving'); setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300); }
+document.addEventListener('click',function(e){
+  var btn=e.target.closest('.btn,.icon-btn,.tab-btn,.switch'); if(!btn)return;
+  var r=btn.getBoundingClientRect(), s=Math.max(r.width,r.height);
+  var sp=document.createElement('span'); sp.className='ripple-span'; sp.style.width=sp.style.height=s+'px';
+  sp.style.left=(e.clientX-r.left-s/2)+'px'; sp.style.top=(e.clientY-r.top-s/2)+'px';
+  btn.appendChild(sp); setTimeout(function(){if(sp.parentNode)sp.parentNode.removeChild(sp);},650);
+});
+
+/* ============================================================
+   MOCK MODE (localStorage) — fallback khi không có backend
+============================================================ */
+var Mock = {
+  loadDB:function(){ try{ var d=JSON.parse(localStorage.getItem(DB_KEY)); if(d&&Array.isArray(d.users)&&Array.isArray(d.files))return d; }catch(e){} return null; },
+  saveDB:function(d){ localStorage.setItem(DB_KEY,JSON.stringify(d)); },
+  seed:function(){ var d=this.loadDB(); if(d)return d; d={users:[{id:'u_admin',username:'admin',password:'admin123',role:'admin',created_at:Date.now()}],files:[]}; this.saveDB(d); return d; },
+  files:function(uid){ return this.loadDB().files.filter(function(f){return f.user_id===uid;}); },
+  find:function(id){ return this.loadDB().files.find(function(f){return f.id===id;}); },
+  runningCount:function(uid){ return this.files(uid).filter(function(f){return f.status==='running';}).length; },
+  list:function(uid,q){ var d=this.loadDB(); var fs=this.files(uid); if(q)fs=fs.filter(function(f){return f.name.toLowerCase().indexOf(q.toLowerCase())!==-1;});
+    var now=Date.now(), out=fs.map(function(f){ return {id:f.id,name:f.name,type:extOf(f.name).slice(1),size:f.size,status:f.status,pid:f.pid,started_at:f.started_at,uploaded_at:f.uploaded_at,uptime_ms:(f.status==='running'?now-f.started_at:0)}; });
+    var running=out.filter(function(f){return f.status==='running';}).length;
+    return {files:out, stats:{total:out.length,running:running,stopped:out.length-running,storage:fs.reduce(function(s,f){return s+(f.size||0);},0),limit_files:MAX_FILES,limit_running:MAX_RUNNING}};
+  },
+  login:function(u,p){ var d=this.seed(); var usr=d.users.find(function(x){return x.username===u&&x.password===p;}); if(!usr)throw new Error('Sai tên đăng nhập hoặc mật khẩu.'); return {token:'mock_'+usr.id,user:{id:usr.id,username:usr.username,role:usr.role}}; },
+  register:function(u,p){ var d=this.seed(); if(d.users.some(function(x){return x.username.toLowerCase()===u.toLowerCase();}))throw new Error('Username đã tồn tại.');
+    var usr={id:'u_'+uid(),username:u,password:p,role:'user',created_at:Date.now()}; d.users.push(usr); this.saveDB(d); return {token:'mock_'+usr.id,user:{id:usr.id,username:usr.username,role:'user'}}; },
+  upload:function(uid,item){ var d=this.loadDB(); if(this.files(uid).length>=MAX_FILES)throw new Error('Đã đạt giới hạn '+MAX_FILES+' file.');
+    var rec={id:uid(),user_id:uid,name:item.name,type:extOf(item.name).slice(1),size:item.size,path:'/bots/'+uid+'/'+item.name,log_path:'/logs/'+uid()+'.log',status:'stopped',pid:null,started_at:null,uploaded_at:Date.now()};
+    d.files.push(rec); this.saveDB(d); return rec; },
+  start:function(uid,id){ var d=this.loadDB(); var f=d.files.find(function(x){return x.id===id;}); if(!f)throw new Error('Không tìm thấy.');
+    if(this.runningCount(uid)>=MAX_RUNNING)throw new Error('Đã đạt giới hạn '+MAX_RUNNING+' tiến trình chạy.');
+    f.status='running'; f.pid=randPid(); f.started_at=Date.now(); this.saveDB(d); return {pid:f.pid}; },
+  stop:function(id){ var d=this.loadDB(); var f=d.files.find(function(x){return x.id===id;}); if(!f)throw new Error('Không tìm thấy.'); f.status='stopped'; f.pid=null; f.started_at=null; this.saveDB(d); return {}; },
+  restart:function(uid,id){ var d=this.loadDB(); var f=d.files.find(function(x){return x.id===id;}); if(!f)throw new Error('Không tìm thấy.'); f.pid=randPid(); f.started_at=Date.now(); f.status='running'; this.saveDB(d); return {pid:f.pid}; },
+  del:function(id){ var d=this.loadDB(); d.files=d.files.filter(function(x){return x.id!==id;}); this.saveDB(d); return {}; },
+  logUsers:['user_9821','ngoc_anh','minh_hieu','bot_fan01','zinh_09','anonymous','telegram_user'],
+  randLine:function(t){ var r=Math.random();
+    if(r<.55)return '['+new Date(t).toISOString().slice(11,19)+'] Received update · message from '+this.logUsers[randInt(0,6)]+' · /cmd_'+randInt(1,9);
+    if(r<.75)return '['+new Date(t).toISOString().slice(11,19)+'] Replied in '+(Math.random()*.3+.05).toFixed(2)+'s · status=200';
+    if(r<.88)return '['+new Date(t).toISOString().slice(11,19)+'] WARN Rate limit hit · sleeping 1s';
+    return '['+new Date(t).toISOString().slice(11,19)+'] getUpdates offset='+randInt(100000,999999); },
+  log:function(id){ var f=this.find(id); if(!f)throw new Error('Không tìm thấy.');
+    var buf=state.mockLogBuffers[id];
+    if(!buf){ buf=[]; var start=f.started_at||Date.now();
+      buf.push('['+new Date(start).toISOString().slice(11,19)+'] Starting '+f.name+' ...');
+      buf.push('['+new Date(start+200).toISOString().slice(11,19)+'] Loaded config · polling_mode=long');
+      buf.push('['+new Date(start+500).toISOString().slice(11,19)+'] Bot authorized · polling started');
+      var t=start+1000; for(var i=0;i<12;i++){ t+=randInt(800,4000); buf.push(this.randLine(t)); }
+      state.mockLogBuffers[id]=buf;
+    } else if(f.status==='running'){ var n=randInt(1,2); for(var j=0;j<n;j++)buf.push(this.randLine(Date.now())); if(buf.length>300)buf.splice(0,buf.length-300); }
+    var now=Date.now();
+    return {lines:buf.slice(-200), status:f.status, pid:f.pid, uptime_ms:(f.status==='running'?now-f.started_at:0)};
+  }
+};
+
+/* ============================================================
+   API LAYER (real backend)
+============================================================ */
+function apiFetch(path, opts){
+  opts = opts||{};
+  var headers = opts.headers||{};
+  if(state.token) headers['Authorization']='Bearer '+state.token;
+  if(opts.body && !(opts.body instanceof FormData)){
+    headers['Content-Type']='application/json';
+    opts.body = JSON.stringify(opts.body);
+  }
+  return fetch('/api'+path, {method:opts.method||'GET', headers:headers, body:opts.body}).then(function(r){
+    return r.json().then(function(j){
+      if(!r.ok) throw new Error(j.error||('Lỗi '+r.status));
+      return j;
+    });
+  });
+}
+var API = {
+  login:function(u,p){ return apiFetch('/auth/login',{method:'POST',body:{username:u,password:p}}); },
+  register:function(u,p){ return apiFetch('/auth/register',{method:'POST',body:{username:u,password:p}}); },
+  list:function(q){ return apiFetch('/files'+(q?'?q='+encodeURIComponent(q):'')); },
+  upload:function(file){ var fd=new FormData(); fd.append('file',file); return apiFetch('/files/upload',{method:'POST',body:fd}); },
+  start:function(id){ return apiFetch('/files/'+id+'/start',{method:'POST'}); },
+  stop:function(id){ return apiFetch('/files/'+id+'/stop',{method:'POST'}); },
+  restart:function(id){ return apiFetch('/files/'+id+'/restart',{method:'POST'}); },
+  del:function(id){ return apiFetch('/files/'+id,{method:'DELETE'}); },
+  log:function(id){ return apiFetch('/files/'+id+'/log'); }
+};
+
+/* Unified async wrappers — return same shape regardless of mode */
+var Svc = {
+  login:function(u,p){ if(state.mode==='api')return API.login(u,p); return Promise.resolve().then(function(){return Mock.login(u,p);}); },
+  register:function(u,p){ if(state.mode==='api')return API.register(u,p); return Promise.resolve().then(function(){return Mock.register(u,p);}); },
+  list:function(q){ if(state.mode==='api')return API.list(q); return Promise.resolve().then(function(){return Mock.list(state.user.id,q);}); },
+  upload:function(item){ if(state.mode==='api')return API.upload(item.file); return Promise.resolve().then(function(){return Mock.upload(state.user.id,item);}); },
+  start:function(id){ if(state.mode==='api')return API.start(id); return Promise.resolve().then(function(){return Mock.start(state.user.id,id);}); },
+  stop:function(id){ if(state.mode==='api')return API.stop(id); return Promise.resolve().then(function(){return Mock.stop(id);}); },
+  restart:function(id){ if(state.mode==='api')return API.restart(id); return Promise.resolve().then(function(){return Mock.restart(state.user.id,id);}); },
+  del:function(id){ if(state.mode==='api')return API.del(id); return Promise.resolve().then(function(){return Mock.del(id);}); },
+  log:function(id){ if(state.mode==='api')return API.log(id); return Promise.resolve().then(function(){return Mock.log(id);}); }
+};
+
+/* ============================================================
+   RENDER
+============================================================ */
+function renderStats(){
+  var s=state.stats;
+  document.getElementById('statTotal').textContent=s.total;
+  document.getElementById('statRunning').textContent=s.running;
+  document.getElementById('statStopped').textContent=s.stopped;
+  document.getElementById('statStorage').textContent=fmtSize(s.storage||0);
+  document.getElementById('usageHint').textContent='Đang dùng '+(s.total||0)+'/'+(s.limit_files||MAX_FILES)+' file · '+(s.running||0)+'/'+(s.limit_running||MAX_RUNNING)+' chạy';
+}
+function renderFileList(){
+  var list=document.getElementById('fileList'); list.innerHTML='';
+  var files=state.files;
+  document.getElementById('emptyState').classList.toggle('hidden', files.length>0);
+  files.forEach(function(f){
+    var meta=TYPE_META['.'+f.type]||{label:'FILE',cls:'type-py',badge:'badge-py',icon:'mdi:file-outline'};
+    var running=f.status==='running';
+    var row=el('div',{class:'file-row card p-3.5 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-3'});
+    var iconBox=el('div',{class:'type-box '+meta.cls}); var fi=document.createElement('iconify-icon'); fi.setAttribute('icon',meta.icon); fi.setAttribute('width','20'); iconBox.appendChild(fi);
+    var info=el('div',{class:'min-w-0 flex-1'});
+    var nameLine=el('div',{class:'flex items-center gap-2 flex-wrap'});
+    nameLine.appendChild(el('span',{text:f.name,style:'font-semibold;font-size:14px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'}));
+    nameLine.appendChild(el('span',{class:'badge '+meta.badge,text:meta.label}));
+    var st=el('span',{class:'flex items-center gap-1.5 text-xs'});
+    st.appendChild(el('span',{class:'status-dot '+(running?'running':'stopped')}));
+    st.appendChild(el('span',{text:running?'Đang chạy':'Đã dừng',style:running?'color:#4ade80':'color:#64748b'}));
+    nameLine.appendChild(st);
+    var metaLine=el('div',{class:'text-xs mt-1 flex items-center gap-2 flex-wrap',style:'color:var(--muted)'});
+    metaLine.appendChild(el('span',{text:fmtSize(f.size)})); metaLine.appendChild(el('span',{text:'·'}));
+    metaLine.appendChild(el('span',{text:fmtTime(f.uploaded_at)}));
+    if(running){
+      metaLine.appendChild(el('span',{text:'·'}));
+      metaLine.appendChild(el('span',{class:'badge badge-pid',text:'PID '+f.pid}));
+      metaLine.appendChild(el('span',{text:'·'}));
+      metaLine.appendChild(el('span',{text:fmtUptime(f.uptime_ms||0),'data-uptime-for':f.id,'data-started':String(f.started_at),style:'color:#c4b5fd;font-variant-numeric:tabular-nums'}));
+    }
+    info.appendChild(nameLine); info.appendChild(metaLine);
+    var actions=el('div',{class:'flex items-center gap-1.5 ml-auto'});
+    var tb=el('button',{class:'icon-btn '+(running?'':'play'),title:running?'Dừng':'Chạy','aria-label':running?'Dừng':'Chạy'});
+    var ti=document.createElement('iconify-icon'); ti.setAttribute('icon',running?'mdi:stop':'mdi:play'); ti.setAttribute('width','15'); tb.appendChild(ti);
+    tb.addEventListener('click',function(){ (running?doStop:doStart)(f.id); });
+    var rb=el('button',{class:'icon-btn',title:'Khởi động lại','aria-label':'Khởi động lại'}); if(!running)rb.disabled=true;
+    var ri=document.createElement('iconify-icon'); ri.setAttribute('icon','mdi:restart'); ri.setAttribute('width','15'); rb.appendChild(ri);
+    rb.addEventListener('click',function(){ doRestart(f.id); });
+    var lb=el('button',{class:'icon-btn',title:'Xem log','aria-label':'Xem log'});
+    var li=document.createElement('iconify-icon'); li.setAttribute('icon','mdi:script-text-outline'); li.setAttribute('width','15'); lb.appendChild(li);
+    lb.addEventListener('click',function(){ openLogModal(f.id); });
+    var db=el('button',{class:'icon-btn danger',title:'Xoá','aria-label':'Xoá'});
+    var di=document.createElement('iconify-icon'); di.setAttribute('icon','mdi:delete-outline'); di.setAttribute('width','15'); db.appendChild(di);
+    db.addEventListener('click',function(){ confirmDelete(f); });
+    actions.appendChild(tb); actions.appendChild(rb); actions.appendChild(lb); actions.appendChild(db);
+    row.appendChild(iconBox); row.appendChild(info); row.appendChild(actions);
+    list.appendChild(row);
+  });
+}
+function refresh(){ return Svc.list(state.search).then(function(d){ state.files=d.files; state.stats=d.stats; renderStats(); renderFileList(); }); }
+
+/* ============================================================
+   ACTIONS
+============================================================ */
+function busy(btn, spinner, textEl, busyText){ btn.disabled=true; spinner.classList.remove('hidden'); if(textEl){textEl.dataset.orig=textEl.textContent; textEl.textContent=busyText;} }
+function idle(btn, spinner, textEl){ btn.disabled=false; spinner.classList.add('hidden'); if(textEl&&textEl.dataset.orig)textEl.textContent=textEl.dataset.orig; }
+
+function doStart(id){ Svc.start(id).then(function(r){ toast('success', r.message||('Đã chạy (PID '+r.pid+').')); return refresh(); }).catch(function(e){ toast('error', e.message); }); }
+function doStop(id){ Svc.stop(id).then(function(r){ toast('info', r.message||'Đã dừng.'); return refresh(); }).catch(function(e){ toast('error', e.message); }); }
+function doRestart(id){ Svc.restart(id).then(function(r){ toast('success', r.message||('Đã khởi động lại (PID '+r.pid+').')); return refresh(); }).catch(function(e){ toast('error', e.message); }); }
+function confirmDelete(f){
+  showConfirm('Xoá file','Bạn có chắc muốn xoá "'+f.name+'"? Hành động này không thể hoàn tác.','Xoá',true,function(){
+    Svc.del(f.id).then(function(){ toast('success','Đã xoá '+f.name+'.'); if(state.logFileId===f.id)closeModal('logModal'); return refresh(); }).catch(function(e){ toast('error',e.message); });
+  });
+}
+
+/* ============================================================
+   AUTH
+============================================================ */
+function setAuthMode(m){
+  state.authMode=m;
+  document.getElementById('tabLogin').classList.toggle('active',m==='login');
+  document.getElementById('tabRegister').classList.toggle('active',m==='register');
+  document.getElementById('confirmField').classList.toggle('hidden',m!=='register');
+  document.getElementById('authSubmitText').textContent=m==='login'?'Đăng nhập':'Tạo tài khoản';
+  document.getElementById('defaultHint').classList.toggle('hidden',m!=='login');
+  document.getElementById('authError').classList.add('hidden');
+}
+function showAuthError(m){ var e=document.getElementById('authError'); e.textContent=m; e.classList.remove('hidden'); }
+
+function handleAuthSubmit(e){
+  e.preventDefault();
+  var u=document.getElementById('usernameInput').value.trim();
+  var p=document.getElementById('passwordInput').value;
+  var c=document.getElementById('confirmInput').value;
+  if(u.length<3)return showAuthError('Username phải có ít nhất 3 ký tự.');
+  if(p.length<6)return showAuthError('Mật khẩu phải có ít nhất 6 ký tự.');
+  if(state.authMode==='register'&&p!==c)return showAuthError('Xác nhận mật khẩu không khớp.');
+  var btn=document.getElementById('authSubmit'), sp=document.getElementById('authSpinner');
+  busy(btn,sp,document.getElementById('authSubmitText'),'Đang xử lý...');
+  var prom = state.authMode==='register' ? Svc.register(u,p) : Svc.login(u,p);
+  prom.then(function(r){
+    state.token=r.token; state.user=r.user;
+    if(state.mode==='api')localStorage.setItem(TOKEN_KEY,r.token);
+    else localStorage.setItem(SESS_KEY,JSON.stringify({user_id:r.user.id,expires_at:Date.now()+30*86400*1000}));
+    toast('success',(state.authMode==='register'?'Đăng ký thành công! ':'Đăng nhập thành công. ')+'Chào mừng '+r.user.username+'!');
+    showDashboard();
+  }).catch(function(err){ showAuthError(err.message); })
+  .then(function(){ idle(btn,sp,document.getElementById('authSubmitText')); });
+}
+
+function showDashboard(){
+  document.getElementById('authScreen').classList.add('hidden');
+  var d=document.getElementById('dashScreen'); d.classList.remove('hidden');
+  d.classList.remove('screen'); void d.offsetWidth; d.classList.add('screen');
+  document.getElementById('userNameDisplay').textContent=state.user.username;
+  document.getElementById('userHandle').textContent=state.user.username;
+  document.getElementById('welcomeName').textContent=state.user.username;
+  document.getElementById('userAvatar').textContent=state.user.username.charAt(0).toUpperCase();
+  document.getElementById('userRoleBadge').textContent=state.user.role==='admin'?'ADMIN':'USER';
+  startPolling();
+  refresh();
+}
+function showAuth(){
+  state.user=null; state.token=null;
+  localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SESS_KEY);
+  stopPolling();
+  document.getElementById('dashScreen').classList.add('hidden');
+  var a=document.getElementById('authScreen'); a.classList.remove('hidden');
+  a.classList.remove('screen'); void a.offsetWidth; a.classList.add('screen');
+  document.getElementById('authForm').reset();
+  setAuthMode('login');
+}
+
+/* ============================================================
+   POLLING + UPTIME TICKER
+============================================================ */
+function startPolling(){
+  stopPolling();
+  state.pollTimer=setInterval(function(){ if(state.user)refresh(); },3000);
+  setInterval(function(){
+    var spans=document.querySelectorAll('[data-uptime-for]'), now=Date.now();
+    for(var i=0;i<spans.length;i++){ var s=spans[i], st=parseInt(s.getAttribute('data-started'),10); if(!isNaN(st))s.textContent=fmtUptime(now-st); }
+  },1500);
+}
+function stopPolling(){ if(state.pollTimer){clearInterval(state.pollTimer); state.pollTimer=null;} }
+
+/* ============================================================
+   UPLOAD MODAL
+============================================================ */
+function openUploadModal(){ state.uploadQueue=[]; renderQueue(); document.getElementById('fileInput').value=''; document.getElementById('uploadModal').classList.remove('hidden'); }
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+function addFilesToQueue(fileList){
+  var arr=Array.prototype.slice.call(fileList||[]);
+  arr.forEach(function(file){
+    var ext=extOf(file.name), valid=true, reason='';
+    if(ALLOWED_EXT.indexOf(ext)===-1){valid=false;reason='Định dạng không hỗ trợ';}
+    else if(file.size>MAX_SIZE){valid=false;reason='Vượt quá 50MB';}
+    state.uploadQueue.push({file:file, name:file.name, size:file.size, valid:valid, reason:reason});
+  });
+  renderQueue();
+}
+function renderQueue(){
+  var wrap=document.getElementById('queueWrap'), list=document.getElementById('queueList'); list.innerHTML='';
+  var valid=state.uploadQueue.filter(function(q){return q.valid;}).length;
+  document.getElementById('queueCount').textContent=valid+'/'+state.uploadQueue.length;
+  wrap.classList.toggle('hidden',state.uploadQueue.length===0);
+  state.uploadQueue.forEach(function(q,idx){
+    var meta=TYPE_META[extOf(q.name)]||{label:'?',cls:'type-py',badge:'badge-py',icon:'mdi:file-outline'};
+    var row=el('div',{class:'flex items-center gap-2.5 p-2.5 rounded-xl',style:'background:rgba(255,255,255,.03);border:1px solid '+(q.valid?'var(--border)':'rgba(239,68,68,.35)')});
+    var ib=el('div',{class:'type-box '+meta.cls,style:'width:32px;height:32px;border-radius:8px'}); var ii=document.createElement('iconify-icon'); ii.setAttribute('icon',meta.icon); ii.setAttribute('width','16'); ib.appendChild(ii);
+    var info=el('div',{class:'min-w-0 flex-1'});
+    info.appendChild(el('div',{text:q.name,style:'font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'}));
+    info.appendChild(el('div',{class:'text-xs',text:q.valid?(fmtSize(q.size)+' · sẵn sàng'):(fmtSize(q.size)+' · '+q.reason),style:'color:'+(q.valid?'var(--muted)':'#f87171')}));
+    var rm=el('button',{class:'icon-btn danger',style:'width:28px;height:28px','aria-label':'Xoá khỏi hàng chờ'}); var ri=document.createElement('iconify-icon'); ri.setAttribute('icon','mdi:close'); ri.setAttribute('width','13'); rm.appendChild(ri);
+    rm.addEventListener('click',function(){ state.uploadQueue.splice(idx,1); renderQueue(); });
+    row.appendChild(ib); row.appendChild(info); row.appendChild(rm); list.appendChild(row);
+  });
+}
+function confirmUpload(){
+  var valid=state.uploadQueue.filter(function(q){return q.valid;});
+  if(valid.length===0){ toast('warn','Không có file hợp lệ để tải lên.'); return; }
+  var btn=document.getElementById('uploadConfirm'), sp=document.getElementById('uploadSpinner'), txt=document.getElementById('uploadConfirmText');
+  busy(btn,sp,txt,'Đang tải lên...');
+  var chain=Promise.resolve();
+  valid.forEach(function(q){ chain=chain.then(function(){ return Svc.upload(q); }); });
+  chain.then(function(){ toast('success','Đã tải lên '+valid.length+' file.'); closeModal('uploadModal'); return refresh(); })
+  .catch(function(e){ toast('error',e.message); })
+  .then(function(){ idle(btn,sp,txt); });
+}
+
+/* ============================================================
+   LOG MODAL
+============================================================ */
+function openLogModal(id){
+  state.logFileId=id;
+  var f=state.files.find(function(x){return x.id===id;});
+  document.getElementById('logFileName').textContent=f?f.name:id;
+  document.getElementById('logModal').classList.remove('hidden');
+  loadLog();
+  if(state.logTimer)clearInterval(state.logTimer);
+  state.logTimer=setInterval(loadLog,1500);
+}
+function loadLog(){
+  if(!state.logFileId)return;
+  Svc.log(state.logFileId).then(function(d){
+    document.getElementById('logPidBadge').textContent=d.pid?('PID '+d.pid):'PID —';
+    document.getElementById('logUptime').textContent=fmtUptime(d.uptime_ms||0);
+    var dotWrap=document.getElementById('logStatusDot'); dotWrap.innerHTML='';
+    var running=d.status==='running';
+    dotWrap.appendChild(el('span',{class:'status-dot '+(running?'running':'stopped')}));
+    dotWrap.appendChild(el('span',{text:running?'running':'stopped',style:running?'color:#4ade80':'color:#64748b'}));
+    document.getElementById('logFooter').textContent=running?'Đang cập nhật realtime mỗi 1.5s...':'Process đã dừng — log ngừng cập nhật.';
+    var body=document.getElementById('logBody');
+    body.innerHTML=d.lines.map(function(l){
+      var m=l.match(/^\[(\d{2}:\d{2}:\d{2})\]\s?(.*)$/);
+      if(m){ var rest=m[2], cls=/WARN/i.test(rest)?'t-warn':(/ERR|error/i.test(rest)?'t-err':'t-info');
+        return '<span class="t-time">['+m[1]+']</span> <span class="'+cls+'">'+esc(rest)+'</span>'; }
+      return esc(l);
+    }).join('\n')+'\n';
+    if(state.autoScroll)body.scrollTop=body.scrollHeight;
+  }).catch(function(e){ document.getElementById('logFooter').textContent='Lỗi: '+e.message; });
+}
+
+/* ============================================================
+   CONFIRM MODAL
+============================================================ */
+function showConfirm(title,msg,okLabel,danger,cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  var ok=document.getElementById('confirmOk'); ok.textContent=okLabel||'Xác nhận';
+  ok.className='btn flex-1 py-2.5 rounded-xl text-sm font-semibold '+(danger?'btn-danger':'btn-primary');
+  var wrap=document.getElementById('confirmIconWrap'), ic=document.getElementById('confirmIcon');
+  if(danger){ wrap.style.background='rgba(239,68,68,.12)'; wrap.style.borderColor='rgba(239,68,68,.35)'; ic.setAttribute('icon','mdi:delete-forever-outline'); ic.style.color='#f87171'; }
+  else { wrap.style.background='rgba(139,92,246,.12)'; wrap.style.borderColor='rgba(139,92,246,.35)'; ic.setAttribute('icon','mdi:help-circle-outline'); ic.style.color='#a78bfa'; }
+  state.confirmCb=cb;
+  document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+/* ============================================================
+   WIRING
+============================================================ */
+function wire(){
+  document.getElementById('tabLogin').addEventListener('click',function(){setAuthMode('login');});
+  document.getElementById('tabRegister').addEventListener('click',function(){setAuthMode('register');});
+  document.getElementById('authForm').addEventListener('submit',handleAuthSubmit);
+  document.getElementById('logoutBtn').addEventListener('click',function(){
+    showConfirm('Đăng xuất','Bạn có chắc muốn đăng xuất khỏi tài khoản '+state.user.username+'?','Đăng xuất',false,function(){ toast('info','Đã đăng xuất.'); showAuth(); });
+  });
+  document.getElementById('uploadBtn').addEventListener('click',openUploadModal);
+  document.getElementById('emptyUploadBtn').addEventListener('click',openUploadModal);
+  document.getElementById('reloadBtn').addEventListener('click',function(){ refresh().then(function(){toast('info','Đã làm mới danh sách.');}); });
+  document.getElementById('searchInput').addEventListener('input',function(e){ state.search=e.target.value; refresh(); });
+  var dz=document.getElementById('dropZone'), fi=document.getElementById('fileInput');
+  dz.addEventListener('click',function(){fi.click();});
+  fi.addEventListener('change',function(e){ addFilesToQueue(e.target.files); fi.value=''; });
+  ['dragover','dragenter'].forEach(function(ev){ dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag');}); });
+  ['dragleave','drop'].forEach(function(ev){ dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag');}); });
+  dz.addEventListener('drop',function(e){ addFilesToQueue(e.dataTransfer.files); });
+  document.getElementById('uploadCancel').addEventListener('click',function(){closeModal('uploadModal');});
+  document.getElementById('uploadClose').addEventListener('click',function(){closeModal('uploadModal');});
+  document.getElementById('queueClear').addEventListener('click',function(){state.uploadQueue=[];renderQueue();});
+  document.getElementById('uploadConfirm').addEventListener('click',confirmUpload);
+  document.getElementById('logClose').addEventListener('click',function(){ state.logFileId=null; if(state.logTimer){clearInterval(state.logTimer);state.logTimer=null;} closeModal('logModal'); });
+  document.getElementById('autoScrollToggle').addEventListener('click',function(){ state.autoScroll=!state.autoScroll; this.classList.toggle('on',state.autoScroll); if(state.autoScroll){var b=document.getElementById('logBody');b.scrollTop=b.scrollHeight;} });
+  document.getElementById('confirmCancel').addEventListener('click',function(){state.confirmCb=null;closeModal('confirmModal');});
+  document.getElementById('confirmOk').addEventListener('click',function(){ var cb=state.confirmCb; state.confirmCb=null; closeModal('confirmModal'); if(cb)cb(); });
+  ['uploadModal','logModal'].forEach(function(id){ document.getElementById(id).addEventListener('click',function(e){ if(e.target===this)closeModal(id); }); });
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape')return;
+    ['uploadModal','logModal','confirmModal'].forEach(function(id){ if(!document.getElementById(id).classList.contains('hidden'))closeModal(id); });
+    state.logFileId=null; if(state.logTimer){clearInterval(state.logTimer);state.logTimer=null;}
+  });
+}
+
+/* ============================================================
+   INIT — detect mode
+============================================================ */
+function detectMode(){
+  return new Promise(function(resolve){
+    try{
+      var ctrl=new AbortController(); var to=setTimeout(function(){ctrl.abort();},2500);
+      fetch('/api/health',{signal:ctrl.signal}).then(function(r){ clearTimeout(to); return r.json(); }).then(function(j){
+        if(j&&j.ok){ resolve('api'); } else resolve('mock');
+      }).catch(function(){ resolve('mock'); });
+    }catch(e){ resolve('mock'); }
+  });
+}
+function init(){
+  wire(); setAuthMode('login'); Mock.seed();
+  detectMode().then(function(mode){
+    state.mode=mode;
+    var real = mode==='api';
+    document.getElementById('modeBadge').classList.toggle('hidden',!real);
+    document.getElementById('modeBadgeDash').classList.toggle('hidden',!real);
+    document.getElementById('modeFooter').textContent = real ? 'real mode · kết nối backend' : 'mock mode (localStorage) — mở qua server để chạy bot thật';
+    if(real){
+      var tok=localStorage.getItem(TOKEN_KEY);
+      if(tok){ state.token=tok;
+        Svc.list().then(function(d){ /* token valid → infer user from first file? no. Need user info. Try list; if works, we need username. Store user too. */
+          var saved=localStorage.getItem(SESS_KEY);
+          if(saved){ try{ var s=JSON.parse(saved); state.user={id:s.user_id,username:s.user_id,role:'user'}; }catch(e){} }
+          if(state.user){ showDashboard(); }
+          else { /* token but no user info → force login */ localStorage.removeItem(TOKEN_KEY); }
+        }).catch(function(){ localStorage.removeItem(TOKEN_KEY); });
+      }
+    } else {
+      var s=null; try{ s=JSON.parse(localStorage.getItem(SESS_KEY)); }catch(e){}
+      if(s&&s.user_id&&Date.now()<(s.expires_at||0)){
+        var u=Mock.loadDB().users.find(function(x){return x.id===s.user_id;});
+        if(u){ state.user={id:u.id,username:u.username,role:u.role}; showDashboard(); }
+      }
+    }
+  });
+}
+init();
+})();
+</script>
+</body>
+</html>
